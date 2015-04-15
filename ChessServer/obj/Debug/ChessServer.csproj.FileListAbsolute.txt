@@ -1,0 +1,1 @@
+C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\bin\Debug\ChessServer.exe.config
