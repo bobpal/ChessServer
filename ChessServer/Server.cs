@@ -11,21 +11,22 @@ namespace ChessServer
     {
         private List<game> games = new List<game>();
         private TcpListener listener;
-        private int playerID = 0;
-        private int gameID = 0;
+        
 
         private class player
         {
             internal TcpClient tcp { get; private set; }
+            internal NetworkStream stream { get; private set; }
             internal player opponent { get; set; }
             internal int pID { get; private set; }
             internal int gID { get; set; }
             internal string status { get; set; }
             internal bool firstPlayer { get; set; }
 
-            public player(TcpClient c, int i, string s)
+            public player(TcpClient c, NetworkStream n, int i, string s)
             {
                 this.tcp = c;
+                this.stream = n;
                 this.pID = i;
                 this.status = s;
             }
@@ -64,15 +65,17 @@ namespace ChessServer
             player waiting = null;
             player newPlayer;
             TcpClient client;
-            NetworkStream wStream;
-            NetworkStream nStream;
-            byte[] start = new byte[7];
+            NetworkStream nwStream;
+            int playerID = 0;
+            int gameID = 0;
+            byte[] start = new byte[7]; //put actual data in
 
             while (true) //Server main loop
             {
                 //wait for clients to connect
                 client = listener.AcceptTcpClient();
-                newPlayer = new player(client, playerID, "waiting");
+                nwStream = client.GetStream();
+                newPlayer = new player(client, nwStream, playerID, "waiting");
                 playerID++;
                 clientThread = new Thread(new ParameterizedThreadStart(clientComm));
                 clientThread.Start(newPlayer);
@@ -94,10 +97,8 @@ namespace ChessServer
                     games.Add(new game(waiting, newPlayer, gameID));
                     gameID++;
                     //Tell clients to start game
-                    wStream = waiting.tcp.GetStream();
-                    nStream = newPlayer.tcp.GetStream();
-                    sendData(waiting.tcp, wStream, start);
-                    sendData(newPlayer.tcp, nStream, start);
+                    waiting.stream.Write(start, 0, start.Length);
+                    nwStream.Write(start, 0, start.Length);
                     waiting = null;
                 }
             }
@@ -109,7 +110,7 @@ namespace ChessServer
             string dataReceived;
             player threadPlayer = (player)p;
             TcpClient threadClient = threadPlayer.tcp;
-            NetworkStream threadStream = threadClient.GetStream();
+            NetworkStream threadStream = threadPlayer.stream;
             byte[] buffer = new byte[threadClient.ReceiveBufferSize];
 
             while(true)
@@ -117,25 +118,20 @@ namespace ChessServer
                 //wait for data to come in
                 bytesRead = threadStream.Read(buffer, 0, threadClient.ReceiveBufferSize);
 
-                if(bytesRead == 7)  //if client send signal, move, etc...
-                {
-                    //do something
-                }
-
-                else if(bytesRead == 0)
+                if(bytesRead == 0)
                 {
                     break;
                 }
 
                 dataReceived = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+                if (dataReceived == "signal, move, IM, etc...")
+                {
+                    //change something on Server or send something to opponent
+                }
             }
             threadStream.Close();
             threadClient.Close();
-        }
-
-        private void sendData(TcpClient to, NetworkStream stream , byte[] data)
-        {
-            stream.Write(data, 0, data.Length);
         }
     }
 }
