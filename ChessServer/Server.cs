@@ -11,7 +11,6 @@ namespace ChessServer
     {
         private List<game> games = new List<game>();
         private TcpListener listener;
-        
 
         private class player
         {
@@ -62,13 +61,13 @@ namespace ChessServer
         private void matchMaking()
         {
             Thread clientThread;
-            player waiting = null;
             player newPlayer;
             TcpClient client;
             NetworkStream nwStream;
+            player waiting = null;
+            byte[] start = new byte[1];
             int playerID = 0;
             int gameID = 0;
-            byte[] start = new byte[7]; //put actual data in
 
             while (true) //Server main loop
             {
@@ -97,8 +96,10 @@ namespace ChessServer
                     games.Add(new game(waiting, newPlayer, gameID));
                     gameID++;
                     //Tell clients to start game
-                    waiting.stream.Write(start, 0, start.Length);
-                    nwStream.Write(start, 0, start.Length);
+                    start[0] = 1;
+                    waiting.stream.Write(start, 0, 1);
+                    start[0] = 2;
+                    newPlayer.stream.Write(start, 0, 1);
                     waiting = null;
                 }
             }
@@ -107,7 +108,6 @@ namespace ChessServer
         private void clientComm(object p)
         {
             int bytesRead;
-            string dataReceived;
             player threadPlayer = (player)p;
             TcpClient threadClient = threadPlayer.tcp;
             NetworkStream threadStream = threadPlayer.stream;
@@ -122,12 +122,15 @@ namespace ChessServer
                 {
                     break;
                 }
-
-                dataReceived = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-
-                if (dataReceived == "signal, move, IM, etc...")
+                //if status update
+                else if(buffer.Length == 1)
                 {
-                    //change something on Server or send something to opponent
+                    //update status
+                }
+                //move
+                else
+                {
+                    //send move to opponent
                 }
             }
             threadStream.Close();
