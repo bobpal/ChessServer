@@ -11,6 +11,14 @@ namespace ChessServer
     {
         private List<game> games = new List<game>();
         private TcpListener listener;
+        private Thread clientThread;
+        private TcpClient client;
+        private NetworkStream nwStream;
+        private player waiting = null;
+        private byte[] start = new byte[1];
+        private byte[] end = new byte[1] {3};
+        private int playerID = 0;
+        private int gameID = 0;
 
         private class player
         {
@@ -60,48 +68,43 @@ namespace ChessServer
 
         private void matchMaking()
         {
-            Thread clientThread;
-            player newPlayer;
-            TcpClient client;
-            NetworkStream nwStream;
-            player waiting = null;
-            byte[] start = new byte[1];
-            int playerID = 0;
-            int gameID = 0;
-
             while (true) //Server main loop
             {
                 //wait for clients to connect
                 client = listener.AcceptTcpClient();
                 nwStream = client.GetStream();
-                newPlayer = new player(client, nwStream, playerID, "waiting");
+                player newPlayer = new player(client, nwStream, playerID, "waiting");
                 playerID++;
                 clientThread = new Thread(new ParameterizedThreadStart(clientComm));
                 clientThread.Start(newPlayer);
-                
-                if(waiting == null)
-                {
-                    waiting = newPlayer;
-                }
-                else
-                {
-                    waiting.firstPlayer = true;
-                    newPlayer.firstPlayer = false;
-                    waiting.gID = gameID;
-                    newPlayer.gID = gameID;
-                    waiting.status = "playing";
-                    newPlayer.status = "playing";
-                    waiting.opponent = newPlayer;
-                    newPlayer.opponent = waiting;
-                    games.Add(new game(waiting, newPlayer, gameID));
-                    gameID++;
-                    //Tell clients to start game
-                    start[0] = 1;
-                    waiting.stream.Write(start, 0, 1);
-                    start[0] = 2;
-                    newPlayer.stream.Write(start, 0, 1);
-                    waiting = null;
-                }
+                addPlayer(newPlayer);
+            }
+        }
+
+        private void addPlayer(player nPlayer)
+        {
+            if (waiting == null)
+            {
+                waiting = nPlayer;
+            }
+            else
+            {
+                waiting.firstPlayer = true;
+                nPlayer.firstPlayer = false;
+                waiting.gID = gameID;
+                nPlayer.gID = gameID;
+                waiting.status = "playing";
+                nPlayer.status = "playing";
+                waiting.opponent = nPlayer;
+                nPlayer.opponent = waiting;
+                games.Add(new game(waiting, nPlayer, gameID));
+                gameID++;
+                //Tell clients to start game
+                start[0] = 1;
+                waiting.stream.Write(start, 0, 1);
+                start[0] = 2;
+                nPlayer.stream.Write(start, 0, 1);
+                waiting = null;
             }
         }
 
@@ -111,12 +114,12 @@ namespace ChessServer
             player threadPlayer = (player)p;
             TcpClient threadClient = threadPlayer.tcp;
             NetworkStream threadStream = threadPlayer.stream;
-            byte[] buffer = new byte[threadClient.ReceiveBufferSize];
+            byte[] buffer = new byte[1024];
 
             while(true)
             {
                 //wait for data to come in
-                bytesRead = threadStream.Read(buffer, 0, threadClient.ReceiveBufferSize);
+                bytesRead = threadStream.Read(buffer, 0, 1024);
 
                 if(bytesRead == 0)
                 {
@@ -125,12 +128,27 @@ namespace ChessServer
                 //if status update
                 else if(buffer.Length == 1)
                 {
-                    //update status
+                    //game over
+                    if(buffer[0] == 1)
+                    {
+                        threadPlayer.status = "gameEnded";
+                    }
+                    //new game
+                    else if(buffer[0] == 2)
+                    {
+                        //tell opponent game ended
+                        threadPlayer.opponent.stream.Write(end, 0, 1);
+                        threadPlayer.opponent.status = "gameEnded";
+                        //move player to waiting
+                        threadPlayer.status = "waiting";
+                        addPlayer(threadPlayer);
+                    }
                 }
                 //move
                 else
                 {
                     //send move to opponent
+                    threadPlayer.opponent.stream.Write(buffer, 0, 1024);
                 }
             }
             threadStream.Close();
