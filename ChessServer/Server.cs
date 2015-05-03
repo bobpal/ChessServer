@@ -114,13 +114,12 @@ namespace ChessServer
             player threadPlayer = (player)p;
             TcpClient threadClient = threadPlayer.tcp;
             NetworkStream threadStream = threadPlayer.stream;
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[512];
 
             while(true)
             {
                 //wait for data to come in
-                bytesRead = threadStream.Read(buffer, 0, 1024);
-
+                bytesRead = threadStream.Read(buffer, 0, 512);
                 if(bytesRead == 0)
                 {
                     break;
@@ -148,7 +147,7 @@ namespace ChessServer
                 else
                 {
                     //send move to opponent
-                    threadPlayer.opponent.stream.Write(buffer, 0, 1024);
+                    threadPlayer.opponent.stream.Write(buffer, 0, 6);
                 }
             }
             threadStream.Close();
