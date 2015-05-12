@@ -116,36 +116,69 @@ namespace ChessServer
             while(true)
             {
                 //wait for data to come in
-                bytesRead = threadStream.Read(buffer, 0, 255);
-                //new local game
-                if(buffer[0] == 1)
+                try
+                {
+                    bytesRead = threadStream.Read(buffer, 0, 255);
+                    //if client clicks cancel
+                    if (bytesRead == 0)
+                    {
+                        if (threadPlayer.opponent != null)
+                        {
+                            if (threadPlayer.opponent.tcp.Connected == true)
+                            {
+                                //tell opponent game ended
+                                threadPlayer.opponent.stream.Write(end, 0, 1);
+                            }
+                        }
+                        break;
+                    }
+                    //new local game
+                    else if (buffer[0] == 1)
+                    {
+                        //tell opponent game ended
+                        threadPlayer.opponent.stream.Write(end, 0, 1);
+                        break;
+                    }
+                    //new network game
+                    else if (buffer[0] == 2)
+                    {
+                        //tell opponent game ended
+                        threadPlayer.opponent.stream.Write(end, 0, 1);
+                        //move player to waiting
+                        addPlayer(threadPlayer);
+                    }
+                    //move
+                    else if (buffer[0] == 7)
+                    {
+                        //send move to opponent
+                        threadPlayer.opponent.stream.Write(buffer, 0, 6);
+                    }
+                    //chat
+                    else
+                    {
+                        threadPlayer.opponent.stream.Write(buffer, 0, bytesRead);
+                    }
+                }
+                //Client closed
+                catch(System.IO.IOException)
                 {
                     //tell opponent game ended
-                    threadPlayer.opponent.stream.Write(end, 0, 1);
+                    if (threadPlayer.opponent != null)
+                    {
+                        threadPlayer.opponent.stream.Write(end, 0, 1);
+                    }
                     break;
-                }
-                //new network game
-                else if(buffer[0] == 2)
-                {
-                    //tell opponent game ended
-                    threadPlayer.opponent.stream.Write(end, 0, 1);
-                    //move player to waiting
-                    addPlayer(threadPlayer);
-                }
-                //move
-                else if (buffer[0] == 7)
-                {
-                    //send move to opponent
-                    threadPlayer.opponent.stream.Write(buffer, 0, 6);
-                }
-                //chat
-                else
-                {
-                    threadPlayer.opponent.stream.Write(buffer, 0, bytesRead);
                 }
             }
             threadStream.Close();
             threadClient.Close();
+            if(waiting != null)
+            {
+                if (waiting.pID == threadPlayer.pID)
+                {
+                    waiting = null;
+                }
+            }
             //find game from gameID and see if can remove from list
         }
     }
