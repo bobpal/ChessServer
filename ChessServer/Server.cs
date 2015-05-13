@@ -132,20 +132,12 @@ namespace ChessServer
                         }
                         break;
                     }
-                    //new local game
+                    //new game
                     else if (buffer[0] == 1)
                     {
                         //tell opponent game ended
                         threadPlayer.opponent.stream.Write(end, 0, 1);
                         break;
-                    }
-                    //new network game
-                    else if (buffer[0] == 2)
-                    {
-                        //tell opponent game ended
-                        threadPlayer.opponent.stream.Write(end, 0, 1);
-                        //move player to waiting
-                        addPlayer(threadPlayer);
                     }
                     //move
                     else if (buffer[0] == 7)
