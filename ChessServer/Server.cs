@@ -112,6 +112,7 @@ namespace ChessServer
             NetworkStream threadStream = threadPlayer.stream;
             byte[] buffer = new byte[255];
             byte[] end = new byte[1] { 3 };
+            byte[] lost = new byte[1] { 4 };
 
             while(true)
             {
@@ -137,6 +138,13 @@ namespace ChessServer
                     {
                         //tell opponent game ended
                         threadPlayer.opponent.stream.Write(end, 0, 1);
+                        break;
+                    }
+                    //game over
+                    else if (buffer[0] == 2)
+                    {
+                        //tell opponent game ended
+                        threadPlayer.opponent.stream.Write(lost, 0, 1);
                         break;
                     }
                     //move
@@ -172,6 +180,20 @@ namespace ChessServer
                 }
             }
             //find game from gameID and see if can remove from list
+            for(int i = 0; i < games.Count; i++)
+            {
+                if(games[i].id == threadPlayer.gID)
+                {
+                    if (threadPlayer.opponent != null)
+                    {
+                        if (games[i].player1.tcp.Connected == false && games[i].player2.tcp.Connected == false)
+                        {
+                            games.RemoveAt(i);
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 }
