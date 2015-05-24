@@ -15,8 +15,8 @@ namespace ChessServer
         private TcpClient client;
         private NetworkStream nwStream;
         private player waiting = null;
-        private int playerID = 0;
-        private int gameID = 0;
+        private int playerID = 1;
+        private int gameID = 1;
 
         private class player
         {
@@ -56,10 +56,34 @@ namespace ChessServer
 
         public Server()
         {
-            IPAddress address = IPAddress.Parse("127.0.0.1");
-            listener = new TcpListener(address, 54321);
-            listener.Start();
-            matchMaking();
+            int portInt;
+            string portString = string.Empty;
+            bool good = true;
+
+            do
+            {
+                Console.WriteLine("Enter IP address");
+                string IP = Console.ReadLine();
+            
+                do
+                {
+                    Console.WriteLine("Enter port");
+                    portString = Console.ReadLine();
+                }while(Int32.TryParse(portString, out portInt) == false);
+
+                try
+                {
+                    IPAddress address = IPAddress.Parse(IP);
+                    listener = new TcpListener(address, portInt);
+                    listener.Start();
+                    matchMaking();
+                }
+                catch(FormatException)
+                {
+                    good = false;
+                    Console.WriteLine("Try again");
+                }
+            } while (good == false);
         }
 
         private void matchMaking()
@@ -84,9 +108,11 @@ namespace ChessServer
             if (waiting == null)
             {
                 waiting = nPlayer;
+                Console.WriteLine("Player #" + nPlayer.pID + " joined");
             }
             else
             {
+                Console.WriteLine("Player #" + nPlayer.pID + " joined");
                 waiting.firstPlayer = true;
                 nPlayer.firstPlayer = false;
                 waiting.gID = gameID;
@@ -94,13 +120,15 @@ namespace ChessServer
                 waiting.opponent = nPlayer;
                 nPlayer.opponent = waiting;
                 games.Add(new game(waiting, nPlayer, gameID));
-                gameID++;
+                
                 //Tell clients to start game
                 start[0] = 1;
                 waiting.stream.Write(start, 0, 1);
                 start[0] = 2;
                 nPlayer.stream.Write(start, 0, 1);
+                Console.WriteLine("Started game #" + gameID + ", with player #" + waiting.pID + " and player #" + nPlayer.pID);
                 waiting = null;
+                gameID++;
             }
         }
 
@@ -170,6 +198,7 @@ namespace ChessServer
                     break;
                 }
             }
+            Console.WriteLine("Player #" + threadPlayer.pID + " left");
             threadStream.Close();
             threadClient.Close();
             if(waiting != null)

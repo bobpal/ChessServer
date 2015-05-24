@@ -1,0 +1,6 @@
+C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\bin\Release\ChessServer.exe.config
+C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\bin\Release\ChessServer.exe
+C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\bin\Release\ChessServer.pdb
+C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\obj\Release\ChessServer.csprojResolveAssemblyReference.cache
+C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\obj\Release\ChessServer.exe
+C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\obj\Release\ChessServer.pdb
