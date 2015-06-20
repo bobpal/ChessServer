@@ -1,6 +1,0 @@
-C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\bin\Debug\ChessServer.exe.config
-C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\bin\Debug\ChessServer.exe
-C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\bin\Debug\ChessServer.pdb
-C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\obj\Debug\ChessServer.csprojResolveAssemblyReference.cache
-C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\obj\Debug\ChessServer.exe
-C:\Users\Robert\Documents\GitHub\ChessServer\ChessServer\obj\Debug\ChessServer.pdb
