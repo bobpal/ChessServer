@@ -1,20 +1,23 @@
 ﻿using System;
-using System.Text;
-using System.Threading;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
+
+//Don't know if issues:
+//Using class globals in threads. Need to lock?
+//What if client joins before matchMaking() can get back to AcceptTcpClient()?
 
 namespace ChessServer
 {
     class Server
     {
-        private List<game> games = new List<game>();
+        private List<game> games = new List<game>();    //used in thread
         private TcpListener listener;
         private Thread clientThread;
         private TcpClient client;
         private NetworkStream nwStream;
-        private player waiting = null;
+        private player waiting = null;  //used in thread
         private int playerID = 1;
         private int gameID = 1;
 
@@ -104,15 +107,14 @@ namespace ChessServer
         private void addPlayer(player nPlayer)
         {
             byte[] start = new byte[1];
+            Console.WriteLine("Player #" + nPlayer.pID + " joined");
 
             if (waiting == null)
             {
                 waiting = nPlayer;
-                Console.WriteLine("Player #" + nPlayer.pID + " joined");
             }
             else
             {
-                Console.WriteLine("Player #" + nPlayer.pID + " joined");
                 waiting.firstPlayer = true;
                 nPlayer.firstPlayer = false;
                 waiting.gID = gameID;
