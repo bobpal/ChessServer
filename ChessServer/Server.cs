@@ -4,20 +4,20 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
-//Don't know if issues:
-//Using class globals in threads. Need to lock?
 //What if client joins before matchMaking() can get back to AcceptTcpClient()?
 
 namespace ChessServer
 {
     class Server
     {
-        private List<game> games = new List<game>();    //used in thread
+        private static List<game> games = new List<game>();
+        private static readonly object gamesLock = new object();
         private TcpListener listener;
         private Thread clientThread;
         private TcpClient client;
         private NetworkStream nwStream;
-        private player waiting = null;  //used in thread
+        private static player waitingPlayer = null;
+        private static readonly object waitingPlayerLock = new object();
         private int playerID = 1;
         private int gameID = 1;
 
@@ -79,9 +79,10 @@ namespace ChessServer
                     IPAddress address = IPAddress.Parse(IP);
                     listener = new TcpListener(address, portInt);
                     listener.Start();
+                    Console.WriteLine("Setup is successful. Waiting for clients");
                     matchMaking();
                 }
-                catch(FormatException)
+                catch(Exception)
                 {
                     good = false;
                     Console.WriteLine("Try again");
@@ -109,28 +110,34 @@ namespace ChessServer
             byte[] start = new byte[1];
             Console.WriteLine("Player #" + nPlayer.pID + " joined");
 
-            if (waiting == null)
+            lock (waitingPlayerLock)
             {
-                waiting = nPlayer;
-            }
-            else
-            {
-                waiting.firstPlayer = true;
-                nPlayer.firstPlayer = false;
-                waiting.gID = gameID;
-                nPlayer.gID = gameID;
-                waiting.opponent = nPlayer;
-                nPlayer.opponent = waiting;
-                games.Add(new game(waiting, nPlayer, gameID));
-                
-                //Tell clients to start game
-                start[0] = 1;
-                waiting.stream.Write(start, 0, 1);
-                start[0] = 2;
-                nPlayer.stream.Write(start, 0, 1);
-                Console.WriteLine("Started game #" + gameID + ", with player #" + waiting.pID + " and player #" + nPlayer.pID);
-                waiting = null;
-                gameID++;
+                if (waitingPlayer == null)
+                {
+                    waitingPlayer = nPlayer;
+                }
+                else
+                {
+                    waitingPlayer.firstPlayer = true;
+                    nPlayer.firstPlayer = false;
+                    waitingPlayer.gID = gameID;
+                    nPlayer.gID = gameID;
+                    waitingPlayer.opponent = nPlayer;
+                    nPlayer.opponent = waitingPlayer;
+                    lock (gamesLock)
+                    {
+                        games.Add(new game(waitingPlayer, nPlayer, gameID));
+                    }
+
+                    //Tell clients to start game
+                    start[0] = 1;
+                    waitingPlayer.stream.Write(start, 0, 1);
+                    start[0] = 2;
+                    nPlayer.stream.Write(start, 0, 1);
+                    Console.WriteLine("Started game #" + gameID + ", with player #" + waitingPlayer.pID + " and player #" + nPlayer.pID);
+                    waitingPlayer = null;
+                    gameID++;
+                }
             }
         }
 
@@ -203,24 +210,31 @@ namespace ChessServer
             Console.WriteLine("Player #" + threadPlayer.pID + " left");
             threadStream.Close();
             threadClient.Close();
-            if(waiting != null)
+            lock(waitingPlayerLock)
             {
-                if (waiting.pID == threadPlayer.pID)
+                if (waitingPlayer != null)
                 {
-                    waiting = null;
+                    if (waitingPlayer.pID == threadPlayer.pID)
+                    {
+                        waitingPlayer = null;
+                    }
                 }
             }
+            
             //find game from gameID and see if can remove from list
-            for(int i = 0; i < games.Count; i++)
+            lock (gamesLock)
             {
-                if(games[i].id == threadPlayer.gID)
+                for (int i = 0; i < games.Count; i++)
                 {
-                    if (threadPlayer.opponent != null)
+                    if (games[i].id == threadPlayer.gID)
                     {
-                        if (games[i].player1.tcp.Connected == false && games[i].player2.tcp.Connected == false)
+                        if (threadPlayer.opponent != null)
                         {
-                            games.RemoveAt(i);
-                            break;
+                            if (games[i].player1.tcp.Connected == false && games[i].player2.tcp.Connected == false)
+                            {
+                                games.RemoveAt(i);
+                                break;
+                            }
                         }
                     }
                 }
