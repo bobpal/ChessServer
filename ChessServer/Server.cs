@@ -4,8 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
-//What if client joins before matchMaking() can get back to AcceptTcpClient()?
-
 namespace ChessServer
 {
     class Server
@@ -79,14 +77,14 @@ namespace ChessServer
                     IPAddress address = IPAddress.Parse(IP);
                     listener = new TcpListener(address, portInt);
                     listener.Start();
-                    Console.WriteLine("Setup is successful. Waiting for clients");
-                    matchMaking();
                 }
                 catch(Exception)
                 {
                     good = false;
                     Console.WriteLine("Try again");
                 }
+                Console.WriteLine("Setup is successful. Waiting for clients");
+                matchMaking();
             } while (good == false);
         }
 

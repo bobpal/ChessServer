@@ -10,3 +10,9 @@ C:\Users\rober\Documents\GitHub\ChessServer\ChessServer\obj\Release\ChessServer.
 C:\Users\rober\Documents\GitHub\ChessServer\ChessServer\bin\Release\ChessServer.exe
 C:\Users\rober\Documents\GitHub\ChessServer\ChessServer\bin\Release\ChessServer.pdb
 C:\Users\rober\Documents\GitHub\ChessServer\ChessServer\obj\Release\ChessServer.csprojResolveAssemblyReference.cache
+C:\Users\robert.palagano\OneDrive - School Board of Polk County, FL\Documents\GitHub\ChessServer\ChessServer\bin\Release\ChessServer.exe.config
+C:\Users\robert.palagano\OneDrive - School Board of Polk County, FL\Documents\GitHub\ChessServer\ChessServer\obj\Release\ChessServer.exe
+C:\Users\robert.palagano\OneDrive - School Board of Polk County, FL\Documents\GitHub\ChessServer\ChessServer\obj\Release\ChessServer.pdb
+C:\Users\robert.palagano\OneDrive - School Board of Polk County, FL\Documents\GitHub\ChessServer\ChessServer\bin\Release\ChessServer.exe
+C:\Users\robert.palagano\OneDrive - School Board of Polk County, FL\Documents\GitHub\ChessServer\ChessServer\bin\Release\ChessServer.pdb
+C:\Users\robert.palagano\OneDrive - School Board of Polk County, FL\Documents\GitHub\ChessServer\ChessServer\obj\Release\ChessServer.csprojResolveAssemblyReference.cache
